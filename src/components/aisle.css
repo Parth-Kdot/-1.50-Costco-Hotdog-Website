@@ -1,0 +1,99 @@
+.aisle {
+  position: relative;
+  width: 220px;
+  padding-top: 64px;
+}
+
+.aisle__chains {
+  position: absolute;
+  top: 0;
+  left: 10px;
+  width: 200px;
+  height: 66px;
+  overflow: visible;
+}
+.aisle__chains line {
+  stroke: #57534b;
+  stroke-width: 2;
+  stroke-dasharray: 3 2.5;
+  stroke-linecap: round;
+}
+
+.aisle__sign {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 12px;
+  align-items: end;
+  padding: 14px 18px 14px;
+  border-radius: 2px;
+  transform-origin: 50% -64px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.18),
+    0 2px 0 rgba(21, 19, 15, 0.12),
+    0 18px 24px -14px rgba(21, 19, 15, 0.5);
+}
+
+.aisle__hook {
+  position: absolute;
+  top: 6px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.35);
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.5);
+}
+.aisle__hook--l {
+  left: 30px;
+}
+.aisle__hook--r {
+  right: 30px;
+}
+
+.aisle__label {
+  grid-column: 1;
+  grid-row: 1;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  opacity: 0.85;
+  align-self: start;
+  margin-top: 6px;
+}
+.aisle__num {
+  grid-column: 1;
+  grid-row: 2;
+  font-size: 66px;
+  line-height: 0.8;
+}
+.aisle__title {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: end;
+  font-size: 15px;
+  line-height: 1.05;
+  letter-spacing: 0.02em;
+  padding-bottom: 2px;
+}
+
+@media (max-width: 760px) {
+  .aisle {
+    width: 190px;
+    padding-top: 48px;
+  }
+  .aisle__chains {
+    height: 50px;
+    width: 170px;
+  }
+  .aisle__sign {
+    transform-origin: 50% -48px;
+    padding: 12px 14px;
+  }
+  .aisle__num {
+    font-size: 52px;
+  }
+  .aisle__title {
+    font-size: 13px;
+  }
+}
