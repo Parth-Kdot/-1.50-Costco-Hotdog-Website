@@ -1,0 +1,66 @@
+.foot {
+  position: relative;
+  padding-bottom: max(40px, env(safe-area-inset-bottom));
+}
+
+.foot__stripe {
+  position: relative;
+  height: 44px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+}
+.foot__stripe::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--safety);
+  -webkit-mask-image: url('/gen/ink.png');
+  mask-image: url('/gen/ink.png');
+  -webkit-mask-size: 900px 450px;
+  mask-size: 900px 450px;
+}
+.foot__track {
+  position: relative;
+  display: flex;
+  white-space: nowrap;
+  will-change: transform;
+  font-size: 20px;
+  letter-spacing: 0.04em;
+  color: var(--board);
+}
+.foot__track span {
+  padding-right: 3em;
+}
+
+.foot__body {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 36px var(--gutter) 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 24px 40px;
+  flex-wrap: wrap;
+}
+.foot__lines p {
+  margin: 0 0 4px;
+  font-size: 14px;
+  color: #6f6b64;
+}
+.foot__nav {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+}
+.foot__nav a {
+  color: var(--board);
+  text-decoration: none;
+  padding: 10px 0;
+  border-bottom: 2px solid transparent;
+}
+.foot__nav a:hover {
+  border-bottom-color: var(--rack);
+}

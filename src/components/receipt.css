@@ -1,0 +1,254 @@
+.receipt-aisle {
+  position: relative;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 4svh var(--gutter) 10svh;
+  display: grid;
+  grid-template-columns: 1fr minmax(0, 440px);
+  gap: 48px;
+  align-items: start;
+}
+
+.receipt-aisle__side {
+  position: sticky;
+  top: 90px;
+  display: grid;
+  gap: 18px;
+  justify-items: start;
+}
+.receipt-aisle__side .form-line {
+  max-width: 30ch;
+  margin: 0;
+}
+
+.receipt-col {
+  position: relative;
+  padding-top: 0;
+}
+
+/* ── Printer ──────────────────────────────────────────────────────── */
+.printer {
+  position: relative;
+  z-index: 3;
+  height: 64px;
+  margin: 0 -18px;
+  border-radius: 10px 10px 4px 4px;
+  background: linear-gradient(#efece6, #dcd8d0);
+  box-shadow:
+    inset 0 1px 0 #fff,
+    inset 0 -3px 0 #c4c0b7,
+    0 2px 0 rgba(21, 19, 15, 0.12),
+    0 14px 20px -12px rgba(21, 19, 15, 0.45);
+}
+.printer__led {
+  position: absolute;
+  top: 14px;
+  right: 22px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--mustard);
+  box-shadow: 0 0 6px rgba(217, 161, 27, 0.9);
+}
+.printer__brand {
+  position: absolute;
+  top: 11px;
+  left: 22px;
+  font-size: 9.5px;
+  letter-spacing: 0.2em;
+  color: #9a968e;
+}
+.printer__slot {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 9px;
+  height: 7px;
+  border-radius: 4px;
+  background: #2c2a27;
+  box-shadow: inset 0 2px 2px #000;
+}
+
+/* ── Paper ────────────────────────────────────────────────────────── */
+.paper {
+  --fed: 100%;
+  position: relative;
+  z-index: 2;
+  margin-top: -12px;
+  padding: 26px 22px 34px;
+  background-color: var(--paper);
+  background-image: url('/gen/grain.png');
+  color: var(--ink);
+  clip-path: inset(0 0 calc(100% - var(--fed)) 0);
+  filter: drop-shadow(0 10px 10px rgba(21, 19, 15, 0.18));
+  -webkit-mask:
+    conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / 14px 51% repeat-x,
+    linear-gradient(#000 0 0) top / 100% calc(100% - 6px) no-repeat;
+  mask:
+    conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / 14px 51% repeat-x,
+    linear-gradient(#000 0 0) top / 100% calc(100% - 6px) no-repeat;
+}
+
+.probe {
+  position: absolute;
+  visibility: hidden;
+  font-size: inherit;
+  white-space: pre;
+}
+
+.paper__lines,
+.probe {
+  font-size: 14px;
+}
+.paper__lines {
+  line-height: 1.55;
+  width: fit-content;
+  margin: 0 auto;
+}
+
+.ln {
+  position: relative;
+  display: block;
+  white-space: pre;
+  min-height: 1.55em;
+}
+.ln--strong {
+  font-weight: 700;
+  text-shadow: 0.25px 0 0 currentColor;
+}
+.ln--faded {
+  color: var(--ink-faded);
+}
+.ln.is-printed {
+  animation: chk 60ms steps(2);
+}
+@keyframes chk {
+  0% {
+    translate: 0.6px 0;
+  }
+  50% {
+    translate: -0.6px 0;
+  }
+}
+
+/* Status gets crossed out, and SHIPPED prints after it */
+.strike {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 2px;
+  background: var(--ink);
+  transform-origin: 0 50%;
+  transform: scaleX(0);
+  transition: transform 180ms steps(8);
+}
+.is-struck .strike {
+  transform: scaleX(1);
+}
+[data-id='shipped'] {
+  visibility: hidden;
+}
+[data-id='shipped'].is-live {
+  visibility: visible;
+  animation: chk 60ms steps(2);
+}
+
+/* Exit checker's highlighter through the total */
+.hl {
+  position: absolute;
+  left: -4px;
+  right: -4px;
+  top: 0;
+  width: calc(100% + 8px);
+  height: 100%;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+}
+.hl path {
+  fill: none;
+  stroke: rgba(243, 193, 46, 0.75);
+  stroke-width: 15;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+.is-checked .hl path {
+  transition: stroke-dashoffset 420ms cubic-bezier(0.5, 0, 0.3, 1);
+  stroke-dashoffset: 0;
+}
+.check {
+  position: absolute;
+  right: -30px;
+  top: -6px;
+  width: 26px;
+  height: 26px;
+  overflow: visible;
+}
+.check path {
+  fill: none;
+  stroke: var(--ketchup);
+  stroke-width: 3.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+.is-checked .check path {
+  transition: stroke-dashoffset 260ms 440ms ease-out;
+  stroke-dashoffset: 0;
+}
+
+.paper__code {
+  margin-top: 18px;
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+}
+.paper__barcode {
+  width: 78%;
+  height: 46px;
+}
+.paper__code .mono {
+  font-size: 12px;
+  letter-spacing: 0.12em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ln.is-printed,
+  [data-id='shipped'].is-live {
+    animation: none;
+  }
+  .strike,
+  .is-checked .hl path,
+  .is-checked .check path {
+    transition: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .receipt-aisle {
+    grid-template-columns: 1fr;
+    gap: 28px;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  .receipt-aisle__side {
+    position: relative;
+    top: 0;
+  }
+  .printer {
+    margin: 0 -6px;
+  }
+  .paper {
+    padding: 22px 14px 30px;
+  }
+  .paper__lines,
+  .probe {
+    font-size: 12.5px;
+  }
+  .check {
+    right: -6px;
+    top: -22px;
+  }
+}
