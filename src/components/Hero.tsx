@@ -5,14 +5,24 @@ import { Odometer, type OdometerHandle } from './Odometer'
 import { Flap, type FlapHandle } from './Flap'
 import { PriceChart, shouldBe } from '../lib/priceChart'
 import { Dust } from '../lib/dust'
+import { PriceTags } from '../lib/priceTags'
 import { pole } from '../lib/pole'
 import { flight } from '../data'
 import './hero.css'
 
 const BEATS = [1990, 1995, 2000, 2005, 2010, 2015, 2020, 2024]
-const CENT_TRIES = ['55', '65', '75', '89', '95', '99', '49', '99']
-const DOLLAR_TRIES = ['', '', '', '', '2', '3', '4', '4']
 const FINAL = 2026
+// Scroll choreography, as fractions of the pin.
+const PUSH_END = 0.12 // camera finishes pushing in
+const YEAR_END = 0.84 // year drum reaches 2026
+const PULL_START = 0.86 // camera starts pulling back
+
+const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2)
+const clamp01 = (t: number) => Math.max(0, Math.min(1, t))
+const splitPrice = (p: number) => {
+  const [d, c] = p.toFixed(2).split('.')
+  return { d, c }
+}
 
 function Screw({ className }: { className: string }) {
   return (
@@ -27,7 +37,6 @@ function Screw({ className }: { className: string }) {
 function ComboArt() {
   return (
     <svg className="combo-art" viewBox="0 0 260 130" aria-hidden>
-      {/* soda: lidded cup with straw */}
       <g transform="translate(176 6)">
         <rect x="27" y="-4" width="5" height="34" rx="1" fill="#b3261e" transform="rotate(12 30 10)" />
         <path d="M6 26h56l-2 7H8z" fill="#15130f" />
@@ -41,7 +50,6 @@ function ComboArt() {
         <path d="M13.2 62h41.6l-1.6 24H14.8z" fill="#b3261e" />
         <path d="M18 74c6-5 10 5 16 0s10 5 16 0" stroke="#fff4da" strokeWidth="2" fill="none" strokeLinecap="round" />
       </g>
-      {/* hot dog */}
       <g transform="translate(6 46)">
         <path d="M10 38c-6 0-10-5-9-11 1-5 6-8 11-8h128c6 0 11 3 11 9 0 6-5 10-11 10z" fill="#d9a11b" />
         <rect x="-2" y="12" width="162" height="22" rx="11" fill="#b3261e" />
@@ -90,15 +98,22 @@ export function Hero() {
   const root = useRef<HTMLElement>(null)
   const stage = useRef<HTMLDivElement>(null)
   const shaker = useRef<HTMLDivElement>(null)
+  const world = useRef<HTMLDivElement>(null)
+  const floorPaint = useRef<HTMLDivElement>(null)
+  const sway = useRef<HTMLDivElement>(null)
   const board = useRef<HTMLDivElement>(null)
   const boardShake = useRef<HTMLDivElement>(null)
+  const pricePanel = useRef<HTMLDivElement>(null)
   const clamp = useRef<HTMLDivElement>(null)
   const bolts = useRef<SVGGElement>(null)
   const stamp = useRef<HTMLDivElement>(null)
   const chartCanvas = useRef<HTMLCanvasElement>(null)
   const dustCanvas = useRef<HTMLCanvasElement>(null)
+  const tagLayer = useRef<HTMLDivElement>(null)
+  const band = useRef<SVGLineElement>(null)
   const yearOdo = useRef<OdometerHandle>(null)
   const shouldOdo = useRef<OdometerHandle>(null)
+  const rejectOdo = useRef<OdometerHandle>(null)
   const cents = useRef<FlapHandle>(null)
   const dollar = useRef<FlapHandle>(null)
   const dollarSign = useRef<FlapHandle>(null)
@@ -110,24 +125,66 @@ export function Hero() {
   useLayoutEffect(() => {
     const reduced = prefersReducedMotion()
     const touch = isTouch()
+    const narrow = window.matchMedia('(max-width: 760px)').matches
+    const ZOOM = narrow ? 1.28 : 1.5
     const chart = new PriceChart(chartCanvas.current!)
     const dust = new Dust(dustCanvas.current!)
     const el = root.current!
+    const w = world.current!
 
-    const state = {
-      year: 1985,
-      fired: new Set<number>(),
-      finale: false,
-      zoom: 0,
-      busy: false,
+    const state = { year: 1985, fired: new Set<number>(), finale: false, zoom: 0, busy: false, scale: 1, rejects: 0 }
+    type Job = { kind: 'beat'; i: number } | { kind: 'finale' } | { kind: 'sling'; price: number }
+    const queue: Job[] = []
+
+    // World-local geometry (unaffected by the camera transform).
+    const local = (node: Element) => {
+      const r = node.getBoundingClientRect()
+      const wr = w.getBoundingClientRect()
+      const s = state.scale
+      return { x: (r.left - wr.left) / s, y: (r.top - wr.top) / s, width: r.width / s, height: r.height / s }
     }
-    const queue: number[] = []
+    let focus = { x: 0, y: 0 }
+    let target = { x: 0, y: 0 }
+    const measure = () => {
+      const p = local(pricePanel.current!)
+      focus = { x: p.x + p.width / 2, y: p.y + p.height * 0.55 }
+      const c = local(cents.current!.flap!.parentElement!)
+      target = { x: c.x + c.width / 2, y: c.y + c.height * 0.62 }
+    }
+
+    const tags = new PriceTags({
+      layer: tagLayer.current!,
+      band: band.current!,
+      scale: () => state.scale,
+      boardRect: () => local(board.current!),
+      onHit: (price) => {
+        queue.push({ kind: 'sling', price })
+        pump()
+      },
+    })
+    tags.create(BEATS.map((year) => ({ year, price: Math.round(shouldBe(year) * 100) / 100 })))
 
     const render = (year: number) => {
       state.year = year
       yearOdo.current?.set(year)
       shouldOdo.current?.set(Math.round(shouldBe(year) * 100) / 100)
       chart.set(year, state.zoom)
+    }
+
+    let lastCam = { k: 0, p: 0 }
+    const camera = (k: number, p: number) => {
+      lastCam = { k, p }
+      const s = 1 + (ZOOM - 1) * k
+      state.scale = s
+      const W = w.clientWidth
+      const H = w.clientHeight
+      gsap.set(w, {
+        transformOrigin: `${focus.x}px ${focus.y}px`,
+        x: (W / 2 - focus.x) * k,
+        y: (H * 0.47 - focus.y) * k,
+        scale: s,
+      })
+      if (floorPaint.current) floorPaint.current.style.setProperty('--walk', `${p * 900}px`)
     }
 
     const shake = (target: HTMLElement, amp: number, dur: number) =>
@@ -149,33 +206,52 @@ export function Hero() {
 
     const panels = () => el.querySelectorAll<HTMLElement>('.panel--lit')
 
-    const attempt = (n: number) => {
+    const bumpRejects = () => {
+      state.rejects += 1
+      const r = { v: state.rejects - 1 }
+      gsap.to(r, { v: state.rejects, duration: 0.3, onUpdate: () => rejectOdo.current?.set(r.v) })
+    }
+
+    // One rejected price change: the flaps lift toward the new price, the clamp slams them back.
+    const attempt = (price: number, strain: number) => {
       const tl = gsap.timeline()
+      const { d, c } = splitPrice(price)
       const leaf = cents.current!.flap!
-      const tryDollar = DOLLAR_TRIES[n]
-      cents.current!.peek(CENT_TRIES[n])
-      if (tryDollar) dollar.current!.peek(tryDollar)
+      cents.current!.peek(c)
+      const tryDollar = d !== '1'
+      if (tryDollar) dollar.current!.peek(d)
       const leaves = tryDollar ? [leaf, dollar.current!.flap!] : [leaf]
-      tl.to(leaves, { rotateX: -70, duration: 0.12, ease: 'power2.in' })
-        .to(clamp.current, { y: 14, duration: 0.06, ease: 'power4.in' }, 0.06)
-        .to(leaves, { rotateX: 0, duration: 0.26, ease: 'back.out(3)' }, 0.12)
-        .to(clamp.current, { y: 0, duration: 0.3, ease: 'back.out(2.4)' }, 0.14)
+      tl.to(leaves, { rotateX: -78, duration: 0.12, ease: 'power2.in' })
+        .to(clamp.current, { y: 16, duration: 0.06, ease: 'power4.in' }, 0.06)
+        .to(leaves, { rotateX: 0, duration: 0.26, ease: 'back.out(3)' }, 0.13)
+        .to(clamp.current, { y: 0, duration: 0.3, ease: 'back.out(2.4)' }, 0.15)
         .add(() => {
-          shake(boardShake.current!, 4, 0.2)
-          gsap.fromTo(panels(), { opacity: 0.55 }, { opacity: 1, duration: 0.09, ease: 'steps(2)' })
+          shake(boardShake.current!, 5, 0.22)
+          gsap.fromTo(shaker.current, { scale: 1.035 }, { scale: 1, duration: 0.4, ease: 'power3.out' })
+          gsap.fromTo(panels(), { opacity: 0.5 }, { opacity: 1, duration: 0.09, ease: 'steps(2)' })
           const b = board.current!.getBoundingClientRect()
-          const d = dustCanvas.current!.getBoundingClientRect()
-          const c = clamp.current!.getBoundingClientRect()
-          dust.burst(c.left - d.left, c.right - d.left, b.top - d.top + 2, 10)
-          dust.burst(b.left - d.left + 20, b.right - d.left - 20, b.top - d.top, 6)
-        }, 0.14)
-        .to(board.current, { scale: 1 + 0.004 * (n + 1), duration: 0.2, ease: 'power2.out' }, 0.14)
-        .to(bolts.current!.querySelectorAll('.clamp__bolt'), { rotate: 6 * (n + 1), duration: 0.12 }, 0.14)
+          const dd = dustCanvas.current!.getBoundingClientRect()
+          const cr = clamp.current!.getBoundingClientRect()
+          dust.burst(cr.left - dd.left, cr.right - dd.left, b.top - dd.top + 2, 10)
+          dust.burst(b.left - dd.left + 20, b.right - dd.left - 20, b.top - dd.top, 6)
+          bumpRejects()
+        }, 0.15)
+        .to(board.current, { scale: 1 + 0.004 * Math.min(strain, 10), duration: 0.2, ease: 'power2.out' }, 0.15)
+        .to(bolts.current!.querySelectorAll('.clamp__bolt'), { rotate: 6 * strain, duration: 0.12 }, 0.15)
         .add(() => {
           cents.current!.peek('50')
           dollar.current!.peek('1')
-        }, 0.4)
-        .to({}, { duration: 0.12 })
+        }, 0.42)
+      return tl
+    }
+
+    const beat = (i: number) => {
+      const price = Math.round(shouldBe(BEATS[i]) * 100) / 100
+      const tl = gsap.timeline()
+      tl.add(tags.fly(i, target))
+      tl.add(attempt(price, i + 1))
+      // the label falls on its own clock so the next one can already be in the air
+      tl.add(() => void tags.knock(i), '-=0.32')
       return tl
     }
 
@@ -183,20 +259,15 @@ export function Hero() {
       const tl = gsap.timeline()
       tl.to({}, { duration: 0.16 })
         .set(stamp.current, { display: 'block' })
-        .fromTo(
-          stamp.current,
-          { scale: 2.4, opacity: 0, rotate: -14 },
-          {
-            scale: 1,
-            opacity: 0.92,
-            rotate: -8,
-            duration: 0.14,
-            ease: 'expo.in',
-          },
-        )
+        .fromTo(stamp.current, { scale: 2.6, opacity: 0, rotate: -16 }, { scale: 1, opacity: 0.94, rotate: -8, duration: 0.14, ease: 'expo.in' })
         .add(() => {
-          shake(shaker.current!, touch ? 6 : 10, 0.26)
-          gsap.fromTo(board.current, { filter: 'brightness(0.94)' }, { filter: 'brightness(1)', duration: 0.3 })
+          shake(shaker.current!, touch ? 7 : 12, 0.3)
+          gsap.fromTo(shaker.current, { scale: 1.06 }, { scale: 1, duration: 0.6, ease: 'power3.out' })
+          gsap.fromTo(board.current, { filter: 'brightness(0.92)' }, { filter: 'brightness(1)', duration: 0.3 })
+          const rows = el.querySelectorAll<HTMLElement>('.tube-row')
+          gsap.fromTo(rows, { opacity: 0.2 }, { opacity: 1, duration: 0.24, ease: 'steps(3)', stagger: 0.05 })
+          const b = local(board.current!)
+          tags.scatter({ x: b.x + b.width / 2, y: b.y + b.height })
         })
         .fromTo(stamp.current, { '--ink': '96%' }, { '--ink': '100%', duration: 0.3, ease: 'power2.out' }, '<')
         .to(
@@ -210,19 +281,22 @@ export function Hero() {
           },
           '+=0.1',
         )
-        .add(() => setDone(true))
+        .add(() => {
+          setDone(true)
+          if (!reduced) tags.enableSling(true)
+        })
       return tl
     }
 
     const pump = () => {
       if (state.busy || !queue.length) return
-      const n = queue.shift()!
+      const job = queue.shift()!
       state.busy = true
-      const tl = n === -1 ? finale() : attempt(n)
-      tl.timeScale(queue.length > 1 ? 1.6 : 1)
+      const tl = job.kind === 'beat' ? beat(job.i) : job.kind === 'finale' ? finale() : attempt(job.price, 10)
+      tl.timeScale(1 + Math.min(queue.length, 4) * 0.45)
       tl.eventCallback('onComplete', () => {
         state.busy = false
-        gsap.delayedCall(queue.length ? 0.18 : 0, pump)
+        gsap.delayedCall(queue.length ? 0.12 : 0, pump)
       })
     }
 
@@ -230,12 +304,12 @@ export function Hero() {
       BEATS.forEach((b, i) => {
         if (year >= b && !state.fired.has(b)) {
           state.fired.add(b)
-          queue.push(i)
+          queue.push({ kind: 'beat', i })
         }
       })
       if (year >= FINAL - 0.2 && !state.finale) {
         state.finale = true
-        queue.push(-1)
+        queue.push({ kind: 'finale' })
       }
       pump()
     }
@@ -243,15 +317,16 @@ export function Hero() {
     const finalState = () => {
       state.zoom = 1
       render(FINAL)
-      gsap.set(stamp.current, {
-        display: 'block',
-        scale: 1,
-        opacity: 0.92,
-        rotate: -8,
-        '--ink': '100%',
-      })
+      tags.placeAll()
+      state.rejects = BEATS.length
+      rejectOdo.current?.set(BEATS.length)
+      gsap.set(stamp.current, { display: 'block', scale: 1, opacity: 0.94, rotate: -8, '--ink': '100%' })
       setDelta(true)
+      setDone(true)
     }
+
+    measure()
+    const ctxCleanup: (() => void)[] = []
 
     const ctx = gsap.context(() => {
       if (reduced) {
@@ -273,17 +348,16 @@ export function Hero() {
           teardownSkip()
         },
       })
-      const strike = (target: HTMLElement | NodeListOf<HTMLElement>, at: number, seed: number, latch = 1) => {
+      const strike = (target: HTMLElement | NodeListOf<HTMLElement>, at: number, seed: number) => {
         let t = at
         const toggles = 2 + (seed % 3)
         for (let i = 0; i < toggles; i++) {
-          const on = 0.04 + ((seed * (i + 3) * 37) % 70) / 1000
-          intro.set(target, { opacity: latch }, t)
-          t += on
+          intro.set(target, { opacity: 1 }, t)
+          t += 0.04 + ((seed * (i + 3) * 37) % 70) / 1000
           intro.set(target, { opacity: 0.08 }, t)
           t += 0.04 + ((seed * (i + 7) * 53) % 70) / 1000
         }
-        intro.set(target, { opacity: latch }, t)
+        intro.set(target, { opacity: 1 }, t)
         return t
       }
       gsap.set(rows, { opacity: 0 })
@@ -320,7 +394,7 @@ export function Hero() {
         intro.play()
       }
 
-      // ── The price holds: scrubbed year, triggered beats ────────────────────
+      // ── Scroll: push in, roll the years, take the hits, pull back ──────────
       const proxy = { p: 0 }
       let replaying = false
       gsap.to(proxy, {
@@ -329,20 +403,45 @@ export function Hero() {
         scrollTrigger: {
           trigger: el,
           start: 'top top',
-          end: touch ? '+=150%' : '+=200%',
+          end: touch ? '+=220%' : '+=300%',
           pin: stage.current,
-          scrub: 0.4,
+          scrub: 0.5,
           anticipatePin: 1,
+          onRefresh: () => {
+            const s = state.scale
+            state.scale = 1
+            gsap.set(w, { clearProps: 'transform' })
+            measure()
+            state.scale = s
+            camera(lastCam.k, lastCam.p)
+          },
         },
         onUpdate: () => {
+          const p = proxy.p
+          const k = p < PUSH_END ? ease(p / PUSH_END) : p < PULL_START ? 1 : 1 - ease(clamp01((p - PULL_START) / (1 - PULL_START)))
+          camera(k, p)
+          gsap.set('.hero__floor, .floor-stripe', { opacity: 1 - k })
           if (replaying) return
-          const raw = 1985 + (FINAL - 1985) * proxy.p
-          // the last fraction of the pin settles the drum on 2026
+          const raw = 1985 + (FINAL - 1985) * clamp01((p - PUSH_END) / (YEAR_END - PUSH_END))
           const year = raw > FINAL - 0.2 ? FINAL : raw
           render(year)
           checkBeats(year)
         },
       })
+
+      // Board leans toward the pointer, hung on its cables.
+      if (!touch) {
+        const ry = gsap.quickTo(sway.current, 'rotationY', { duration: 0.9, ease: 'power3.out' })
+        const rx = gsap.quickTo(sway.current, 'rotationX', { duration: 0.9, ease: 'power3.out' })
+        const mv = (e: PointerEvent) => {
+          const r = stage.current!.getBoundingClientRect()
+          if (e.clientY > r.bottom || e.clientY < r.top) return
+          ry(((e.clientX - r.left) / r.width - 0.5) * 7)
+          rx(-((e.clientY - r.top) / r.height - 0.5) * 4)
+        }
+        window.addEventListener('pointermove', mv, { passive: true })
+        ctxCleanup.push(() => window.removeEventListener('pointermove', mv))
+      }
 
       replay.current = () => {
         if (replaying) return
@@ -350,16 +449,19 @@ export function Hero() {
         state.fired.clear()
         state.finale = false
         state.zoom = 0
+        state.rejects = 0
+        rejectOdo.current?.set(0)
+        tags.enableSling(false)
+        tags.hideAll()
         setDelta(false)
+        setDone(false)
         gsap.set(stamp.current, { display: 'none' })
         gsap.set(board.current, { scale: 1 })
-        gsap.set(bolts.current!.querySelectorAll('.clamp__bolt'), {
-          rotate: 0,
-        })
+        gsap.set(bolts.current!.querySelectorAll('.clamp__bolt'), { rotate: 0 })
         const run = { y: 1985 }
         gsap.to(run, {
           y: FINAL,
-          duration: 4.5,
+          duration: 5.5,
           ease: 'power1.inOut',
           onUpdate: () => {
             render(run.y)
@@ -375,9 +477,11 @@ export function Hero() {
     render(reduced ? FINAL : 1985)
 
     return () => {
+      ctxCleanup.forEach((f) => f())
       ctx.revert()
       chart.destroy()
       dust.destroy()
+      tags.destroy()
       ScrollTrigger.refresh()
     }
   }, [])
@@ -386,71 +490,99 @@ export function Hero() {
     <section className="hero" ref={root} id="aisle-0" aria-label="The price holds">
       <div className="hero__stage" ref={stage}>
         <div className="hero__shake" ref={shaker}>
-          <div className="ceiling" aria-hidden>
-            {[0, 1, 2].map((r) => (
-              <div className={`tube-row tube-row--${r}`} key={r}>
-                <span className="tube" />
-                <span className="tube" />
-                <span className="tube tube--far" />
-              </div>
-            ))}
-          </div>
-
-          <div className="board-hang">
-            <i className="cable cable--l" aria-hidden />
-            <i className="cable cable--r" aria-hidden />
-            <div className="board-shake" ref={boardShake}>
-              <div className="board" ref={board}>
-                <Screw className="screw--tl" />
-                <Screw className="screw--tr" />
-                <Screw className="screw--bl" />
-                <Screw className="screw--br" />
-
-                <div className="panel panel--lit panel--item">
-                  <ComboArt />
-                  <div className="item-name">HOT DOG + SODA</div>
-                  <div className="item-sub mono">COMBO · LIMIT: ONE FAMILY</div>
+          <div className="hero__world" ref={world}>
+            <div className="wall-base" aria-hidden />
+            <div className="floor" aria-hidden>
+              <div className="floor__plane">
+                <div className="floor__paint" ref={floorPaint}>
+                  <span className="floor__stencil floor__stencil--a wide">LANE 07</span>
+                  <span className="floor__stencil floor__stencil--b wide">$1.50</span>
+                  <span className="floor__stencil floor__stencil--c wide">SINCE 1985</span>
+                  <span className="floor__stencil floor__stencil--d wide">ONE PRICE</span>
                 </div>
+              </div>
+            </div>
 
-                <div className="panel panel--lit panel--price">
-                  <div className="price-row">
-                    <span className="micro mono">YEAR</span>
-                    <Odometer ref={yearOdo} digits={4} initial={1985} size={34} className="odo--year" label="Year" />
-                  </div>
-                  <div className="price-tiles">
-                    <div className="clamp" ref={clamp}>
-                      <Clamp boltRef={bolts} />
+            <div className="ceiling" aria-hidden>
+              {[0, 1, 2].map((r) => (
+                <div className={`tube-row tube-row--${r}`} key={r}>
+                  <span className="tube" />
+                  <span className="tube" />
+                  <span className="tube tube--far" />
+                </div>
+              ))}
+            </div>
+
+            <div className="board-hang">
+              <i className="cable cable--l" aria-hidden />
+              <i className="cable cable--r" aria-hidden />
+              <div className="board-sway" ref={sway}>
+                <div className="board-shake" ref={boardShake}>
+                  <div className="board" ref={board}>
+                    <Screw className="screw--tl" />
+                    <Screw className="screw--tr" />
+                    <Screw className="screw--bl" />
+                    <Screw className="screw--br" />
+
+                    <div className="panel panel--lit panel--item">
+                      <ComboArt />
+                      <div className="item-name">HOT DOG + SODA</div>
+                      <div className="item-sub mono">COMBO · LIMIT: ONE FAMILY</div>
                     </div>
-                    <Flap ref={dollarSign} value="$" small />
-                    <Flap ref={dollar} value="1" />
-                    <Flap ref={dot} value="." small />
-                    <Flap ref={cents} value="50" wide />
-                  </div>
-                  <p className="sr-only">Price: one dollar fifty. Still.</p>
-                  <div className="stamp" ref={stamp} aria-hidden>
-                    <span>STILL $1.50</span>
-                  </div>
-                </div>
 
-                <div className="panel panel--display">
-                  <div className="display-head mono">
-                    <span>WHAT IT SHOULD BE</span>
-                    <span className="display-readout">
-                      <Odometer ref={shouldOdo} digits={3} decimals={2} initial={1.5} size={18} />
-                    </span>
-                  </div>
-                  <div className="display-chart">
-                    <canvas
-                      ref={chartCanvas}
-                      aria-label="Chart: the combo price stays flat at 1.50 while inflation-adjusted price climbs to about 4.37"
-                    />
-                  </div>
-                  <div className="display-foot mono">
-                    <span>1985 DOLLARS · CPI-U · BLS</span>
-                    <span className={`delta${delta ? ' delta--on' : ''}`}>Δ 41Y: 0.00%</span>
+                    <div className="panel panel--lit panel--price" ref={pricePanel}>
+                      <div className="price-row">
+                        <span className="micro mono">YEAR</span>
+                        <Odometer ref={yearOdo} digits={4} initial={1985} size={34} className="odo--year" label="Year" />
+                      </div>
+                      <div className="price-tiles">
+                        <div className="clamp" ref={clamp}>
+                          <Clamp boltRef={bolts} />
+                        </div>
+                        <Flap ref={dollarSign} value="$" small />
+                        <Flap ref={dollar} value="1" />
+                        <Flap ref={dot} value="." small />
+                        <Flap ref={cents} value="50" wide />
+                      </div>
+                      <p className="sr-only">Price: one dollar fifty. Still.</p>
+                      <div className="stamp" ref={stamp} aria-hidden>
+                        <span>STILL $1.50</span>
+                      </div>
+                    </div>
+
+                    <div className="panel panel--display">
+                      <div className="display-head mono">
+                        <span>WHAT IT SHOULD BE</span>
+                        <span className="display-readout">
+                          <Odometer ref={shouldOdo} digits={3} decimals={2} initial={1.5} size={18} />
+                        </span>
+                      </div>
+                      <div className="display-chart">
+                        <canvas
+                          ref={chartCanvas}
+                          aria-label="Chart: the combo price stays flat at 1.50 while inflation-adjusted price climbs to about 4.37"
+                        />
+                      </div>
+                      <div className="display-foot mono">
+                        <span>1985 DOLLARS · CPI-U · BLS</span>
+                        <span className={`delta${delta ? ' delta--on' : ''}`}>Δ 41Y: 0.00%</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
+            </div>
+
+            <div className="tags" ref={tagLayer}>
+              <svg className="tags__band" aria-hidden>
+                <line ref={band} />
+              </svg>
+            </div>
+
+            <div className="dark-bands" aria-hidden>
+              <div className="dark-band" />
+              <div className="dark-band" />
+              <div className="dark-band" />
             </div>
           </div>
 
@@ -463,24 +595,22 @@ export function Hero() {
                 MOONSHOT MISSION {flight.mission} · {flight.task.toUpperCase()} · {flight.pts} PTS
               </p>
             </div>
-            <button
-              className={`key run-key${done ? ' run-key--on' : ''}`}
-              onClick={() => replay.current()}
-              tabIndex={done ? 0 : -1}
-              aria-hidden={!done}
-            >
-              Run it again
-            </button>
+            <div className={`hero__after${done ? ' hero__after--on' : ''}`} aria-hidden={!done}>
+              <div className="rejects">
+                <span className="mono">PRICE CHANGES
+                  <br />
+                  REJECTED</span>
+                <Odometer ref={rejectOdo} digits={2} initial={0} size={24} label="Price changes rejected" />
+              </div>
+              <p className="sling-hint mono">PULL A TAG BACK, LET GO</p>
+              <button className="key run-key" onClick={() => replay.current()} tabIndex={done ? 0 : -1}>
+                Run it again
+              </button>
+            </div>
           </div>
 
           <div className="floor-stripe" aria-hidden>
             <span className="wide">AISLE 01 →</span>
-          </div>
-
-          <div className="dark-bands" aria-hidden>
-            <div className="dark-band" />
-            <div className="dark-band" />
-            <div className="dark-band" />
           </div>
         </div>
       </div>

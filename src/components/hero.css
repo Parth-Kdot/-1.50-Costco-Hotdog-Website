@@ -476,19 +476,211 @@
   color: #6f6b64;
 }
 
-.run-key {
+.hero__floor {
+  pointer-events: none;
+}
+.hero__after {
+  display: flex;
+  align-items: flex-end;
+  gap: 18px;
   opacity: 0;
   transform: translateY(6px);
-  pointer-events: none;
   transition:
-    opacity 300ms,
-    transform 300ms;
-  flex: none;
+    opacity 400ms,
+    transform 400ms;
 }
-.run-key--on {
+.hero__after--on {
   opacity: 1;
   transform: none;
+}
+.hero__after--on .key {
   pointer-events: auto;
+}
+.rejects {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.rejects .mono {
+  font-size: 10px;
+  line-height: 1.3;
+  letter-spacing: 0.1em;
+  color: #6f6b64;
+  text-align: right;
+}
+.sling-hint {
+  margin: 0 0 10px;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--rack);
+}
+.run-key {
+  flex: none;
+}
+
+/* ── World: wall, floor, tags (the camera moves all of it) ─────────── */
+.hero__world {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+}
+
+.wall-base {
+  position: absolute;
+  left: -20%;
+  right: -20%;
+  top: 66svh;
+  height: 14px;
+  background: linear-gradient(#a29e96, #8f8b83);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.4),
+    0 6px 10px rgba(21, 19, 15, 0.12);
+  z-index: 1;
+}
+
+.floor {
+  position: absolute;
+  left: -30%;
+  right: -30%;
+  top: calc(66svh + 14px);
+  bottom: -2px;
+  overflow: hidden;
+  perspective: 560px;
+  perspective-origin: 50% -30px;
+  z-index: 0;
+}
+.floor__plane {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2600px;
+  transform-origin: 50% 100%;
+  transform: rotateX(76deg);
+  background:
+    linear-gradient(0deg, rgba(21, 19, 15, 0) 60%, rgba(21, 19, 15, 0.12)),
+    url('/gen/concrete.png') 0 0 / 512px 512px,
+    #cfcbc3;
+}
+.floor__paint {
+  --walk: 0px;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background:
+    linear-gradient(90deg, transparent calc(40% - 9px), rgba(243, 193, 46, 0.9) calc(40% - 9px), rgba(243, 193, 46, 0.9) calc(40% + 9px), transparent calc(40% + 9px)),
+    linear-gradient(90deg, transparent calc(60% - 9px), rgba(243, 193, 46, 0.9) calc(60% - 9px), rgba(243, 193, 46, 0.9) calc(60% + 9px), transparent calc(60% + 9px)),
+    repeating-linear-gradient(0deg, transparent 0 218px, rgba(120, 116, 108, 0.45) 218px 221px) 0 var(--walk) / 100% 221px;
+  -webkit-mask-image: url('/gen/ink.png');
+  mask-image: url('/gen/ink.png');
+  -webkit-mask-size: 1000px 500px;
+  mask-size: 1000px 500px;
+}
+.floor__stencil {
+  position: absolute;
+  left: 50%;
+  transform: translate(-50%, var(--walk));
+  white-space: nowrap;
+  color: rgba(243, 193, 46, 0.92);
+  letter-spacing: 0.02em;
+  line-height: 0.8;
+}
+.floor__stencil--a {
+  bottom: 120px;
+  font-size: 150px;
+}
+.floor__stencil--b {
+  bottom: 620px;
+  font-size: 300px;
+  color: rgba(228, 87, 29, 0.85);
+}
+.floor__stencil--c {
+  bottom: 1150px;
+  font-size: 170px;
+}
+.floor__stencil--d {
+  bottom: 1600px;
+  font-size: 170px;
+  color: rgba(228, 87, 29, 0.85);
+}
+
+.board-hang {
+  perspective: 1400px;
+}
+.board-sway {
+  transform-style: preserve-3d;
+  transform-origin: 50% 0;
+}
+
+/* Price-gun labels */
+.tags {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+}
+.tags__band {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.tags__band line {
+  stroke: #57534b;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 2 3;
+  opacity: 0;
+  transition: opacity 120ms;
+}
+.ptag {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: grid;
+  justify-items: center;
+  padding: 6px 14px 7px;
+  min-width: 92px;
+  background-color: #fbf9f3;
+  background-image: url('/gen/grain.png');
+  color: var(--ketchup);
+  border-radius: 2px;
+  -webkit-mask:
+    radial-gradient(circle 3px at 0 50%, #0000 96%, #000) left / 51% 9px repeat-y,
+    radial-gradient(circle 3px at 100% 50%, #0000 96%, #000) right / 51% 9px repeat-y;
+  mask:
+    radial-gradient(circle 3px at 0 50%, #0000 96%, #000) left / 51% 9px repeat-y,
+    radial-gradient(circle 3px at 100% 50%, #0000 96%, #000) right / 51% 9px repeat-y;
+  filter: drop-shadow(0 4px 4px rgba(21, 19, 15, 0.3));
+  will-change: transform;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.ptag__k,
+.ptag__y {
+  font-family: var(--f-mono);
+  font-size: 8.5px;
+  letter-spacing: 0.12em;
+  color: var(--ink-faded);
+}
+.ptag__p {
+  font-family: var(--f-board);
+  font-weight: 900;
+  font-size: 30px;
+  line-height: 1;
+}
+.tags--sling .ptag {
+  pointer-events: auto;
+  cursor: grab;
+  touch-action: none;
+}
+.tags--sling .ptag:hover {
+  filter: brightness(1.04);
+}
+.ptag--held {
+  cursor: grabbing;
+  z-index: 2;
 }
 
 .floor-stripe {
@@ -594,10 +786,24 @@
   .floor-meta {
     font-size: 10px;
   }
-  .run-key--on {
-    position: absolute;
-    right: 0;
-    bottom: 0;
+  .hero__after {
+    width: 100%;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .sling-hint {
+    display: none;
+  }
+  .ptag {
+    min-width: 72px;
+    padding: 4px 10px 5px;
+  }
+  .ptag__p {
+    font-size: 22px;
+  }
+  .wall-base,
+  .floor {
+    top: calc(76svh);
   }
 }
 
