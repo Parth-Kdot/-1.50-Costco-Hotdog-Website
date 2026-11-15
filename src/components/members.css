@@ -1,3 +1,7 @@
+.members-wrap {
+  overflow-x: clip;
+}
+
 .members {
   position: relative;
   max-width: 1240px;
@@ -235,7 +239,6 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  image-rendering: pixelated;
   pointer-events: none;
 }
 .card__photo--remote::after {
@@ -404,12 +407,12 @@
     max-width: 420px;
   }
   .desk {
-    padding: 10px 0 120px;
+    padding: 10px 0 70px;
   }
   .counter {
-    height: 170px;
+    height: 130px;
   }
   .desk__hint {
-    margin-top: 72px;
+    margin-top: 44px;
   }
 }

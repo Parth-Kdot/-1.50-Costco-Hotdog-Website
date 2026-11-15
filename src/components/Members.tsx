@@ -15,7 +15,7 @@ const EMBLEM = `url("data:image/svg+xml,${encodeURIComponent(
     <path d='M13 35c0 6 4 9 10 9h18c6 0 10-3 10-9z'/>
     <path d='M13 30c0-3 3-5 6-5h26c3 0 6 2 6 5z' opacity='.9'/>
     ${Array.from({ length: 7 }, (_, i) => {
-      const a = (Math.PI * (0.62 + i * 0.13))
+      const a = Math.PI * (0.62 + i * 0.13)
       const x = 32 + Math.cos(a) * 26
       const y = 32 + Math.sin(a) * 26
       const x2 = 64 - x
@@ -135,17 +135,9 @@ function Card({
       className={`card${top ? ' card--top' : ''}`}
       style={{ zIndex: 10 - depth, ['--foil' as string]: foilPos, ['--sheen' as string]: sheen }}
       initial={false}
-      animate={
-        out
-          ? { x: out.x, y: out.y, rotate: out.x > 0 ? 18 : -18, opacity: 1 }
-          : { ...slot, opacity: depth > 3 && narrow ? 0 : 1 }
-      }
+      animate={out ? { x: out.x, y: out.y, rotate: out.x > 0 ? 18 : -18, opacity: 1 } : { ...slot, opacity: depth > 3 && narrow ? 0 : 1 }}
       transition={
-        out
-          ? { duration: 0.28, ease: [0.3, 0.6, 0.4, 1] }
-          : reduced
-            ? { duration: 0.15 }
-            : { type: 'spring', stiffness: 260, damping: 24 }
+        out ? { duration: 0.28, ease: [0.3, 0.6, 0.4, 1] } : reduced ? { duration: 0.15 } : { type: 'spring', stiffness: 260, damping: 24 }
       }
       onAnimationComplete={() => {
         if (out) {
@@ -214,58 +206,64 @@ export function Members() {
   }, [advance, topMember.id])
 
   return (
-    <section className="members" id="aisle-1" aria-labelledby="members-title">
-      <div className="members__head">
-        <AisleMarker n={1} title={'MEMBER-\nSHIP'} color="var(--rack)" />
-        <h2 id="members-title" className="sr-only">
-          Membership: six members
-        </h2>
-        <p className="form-line">FORM 01 · CARDS ON FILE: 6 · MENTORS 3 / MENTEES 3</p>
-      </div>
-
-      <div className="members__floor">
-        <ol className="members__index" aria-label="Cards on file">
-          {members.map((m, i) => (
-            <li key={m.id}>
-              <button onClick={() => goTo(i)} aria-current={order[0] === i}>
-                {order[0] === i && (
-                  <motion.span layoutId="index-pill" className="members__pill" transition={{ type: 'spring', stiffness: 500, damping: 38 }} />
-                )}
-                <span className="members__idx mono">0{i + 1}</span>
-                <span className="members__nm mono">{m.short.toUpperCase()}</span>
-                <span className="members__role mono">{m.role === 'mentor' ? 'MTR' : 'MTE'}</span>
-              </button>
-            </li>
-          ))}
-        </ol>
-
-        <div className="desk">
-          <div
-            className="stack"
-            ref={stack}
-            tabIndex={0}
-            role="group"
-            aria-roledescription="card stack"
-            aria-label={`${topMember.name}, ${topMember.role}. Arrow keys change card, Enter flips.`}
-          >
-            {members.map((m, i) => (
-              <Card
-                key={m.id}
-                m={m}
-                no={i + 1}
-                depth={order.indexOf(i)}
-                flipped={flipped === m.id}
-                onFlip={() => setFlipped((f) => (f === m.id ? null : m.id))}
-                onFling={() => advance(1)}
-                narrow={narrow}
-                reduced={reduced}
-              />
-            ))}
-          </div>
-          <div className="counter" aria-hidden />
-          <p className="desk__hint mono">{narrow ? 'SWIPE TO NEXT CARD · TAP TO FLIP' : 'DRAG TO FILE · CLICK TO FLIP · ← → KEYS'}</p>
+    <div className="members-wrap">
+      <section className="members" id="aisle-1" aria-labelledby="members-title">
+        <div className="members__head">
+          <AisleMarker n={1} title={'MEMBER-\nSHIP'} color="var(--rack)" />
+          <h2 id="members-title" className="sr-only">
+            Membership: six members
+          </h2>
+          <p className="form-line">FORM 01 · CARDS ON FILE: 6 · MENTORS 3 / MENTEES 3</p>
         </div>
-      </div>
-    </section>
+
+        <div className="members__floor">
+          <ol className="members__index" aria-label="Cards on file">
+            {members.map((m, i) => (
+              <li key={m.id}>
+                <button onClick={() => goTo(i)} aria-current={order[0] === i}>
+                  {order[0] === i && (
+                    <motion.span
+                      layoutId="index-pill"
+                      className="members__pill"
+                      transition={{ type: 'spring', stiffness: 500, damping: 38 }}
+                    />
+                  )}
+                  <span className="members__idx mono">0{i + 1}</span>
+                  <span className="members__nm mono">{m.short.toUpperCase()}</span>
+                  <span className="members__role mono">{m.role === 'mentor' ? 'MTR' : 'MTE'}</span>
+                </button>
+              </li>
+            ))}
+          </ol>
+
+          <div className="desk">
+            <div
+              className="stack"
+              ref={stack}
+              tabIndex={0}
+              role="group"
+              aria-roledescription="card stack"
+              aria-label={`${topMember.name}, ${topMember.role}. Arrow keys change card, Enter flips.`}
+            >
+              {members.map((m, i) => (
+                <Card
+                  key={m.id}
+                  m={m}
+                  no={i + 1}
+                  depth={order.indexOf(i)}
+                  flipped={flipped === m.id}
+                  onFlip={() => setFlipped((f) => (f === m.id ? null : m.id))}
+                  onFling={() => advance(1)}
+                  narrow={narrow}
+                  reduced={reduced}
+                />
+              ))}
+            </div>
+            <div className="counter" aria-hidden />
+            <p className="desk__hint mono">{narrow ? 'SWIPE TO NEXT CARD · TAP TO FLIP' : 'DRAG TO FILE · CLICK TO FLIP · ← → KEYS'}</p>
+          </div>
+        </div>
+      </section>
+    </div>
   )
 }
