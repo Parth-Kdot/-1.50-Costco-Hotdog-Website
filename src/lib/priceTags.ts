@@ -56,7 +56,7 @@ export class PriceTags {
     const f = ((i * 0.618034) % 1) * 0.85 + (i / 9) * 0.15
     return {
       x: w * (span[0] + (span[1] - span[0]) * f) + (((i * 29) % 17) - 8),
-      y: h * (narrow ? 0.82 : 0.755) + ((i * 37) % 5) * h * 0.014,
+      y: h * (narrow ? 0.79 : 0.755) + ((i * 37) % 5) * h * 0.014,
       r: ((i * 53) % 56) - 28,
     }
   }
@@ -86,7 +86,12 @@ export class PriceTags {
     const t = this.tags[i]
     const { w, h } = this.size
     const side = i % 3
-    const start = side === 0 ? { x: -160, y: h * (0.25 + (i % 2) * 0.2) } : side === 1 ? { x: w + 160, y: h * (0.18 + (i % 2) * 0.25) } : { x: w * (0.3 + (i % 4) * 0.15), y: -140 }
+    const start =
+      side === 0
+        ? { x: -160, y: h * (0.25 + (i % 2) * 0.2) }
+        : side === 1
+          ? { x: w + 160, y: h * (0.18 + (i % 2) * 0.25) }
+          : { x: w * (0.3 + (i % 4) * 0.15), y: -140 }
     const ctrl = { x: (start.x + target.x) / 2, y: Math.min(start.y, target.y) - h * 0.22 }
     const spin = (side === 1 ? -1 : 1) * (360 + i * 40)
     const p = { t: 0 }
@@ -121,7 +126,11 @@ export class PriceTags {
       onUpdate: () => gsap.set(t.el, { x: t.x }),
     })
     tl.to(t, { y: dest.y, duration: 0.75, ease: 'bounce.out', onUpdate: () => gsap.set(t.el, { y: t.y }) }, 0)
-    tl.to(t, { r: dest.r + (dest.x > fromX ? 200 : -200), duration: 0.75, ease: 'power2.out', onUpdate: () => gsap.set(t.el, { rotate: t.r }) }, 0)
+    tl.to(
+      t,
+      { r: dest.r + (dest.x > fromX ? 200 : -200), duration: 0.75, ease: 'power2.out', onUpdate: () => gsap.set(t.el, { rotate: t.r }) },
+      0,
+    )
     tl.add(() => this.put(t, dest.x, dest.y, dest.r))
     return tl
   }

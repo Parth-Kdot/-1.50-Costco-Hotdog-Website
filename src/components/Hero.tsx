@@ -259,7 +259,11 @@ export function Hero() {
       const tl = gsap.timeline()
       tl.to({}, { duration: 0.16 })
         .set(stamp.current, { display: 'block' })
-        .fromTo(stamp.current, { scale: 2.6, opacity: 0, rotate: -16 }, { scale: 1, opacity: 0.94, rotate: -8, duration: 0.14, ease: 'expo.in' })
+        .fromTo(
+          stamp.current,
+          { scale: 2.6, opacity: 0, rotate: -16 },
+          { scale: 1, opacity: 0.94, rotate: -8, duration: 0.14, ease: 'expo.in' },
+        )
         .add(() => {
           shake(shaker.current!, touch ? 7 : 12, 0.3)
           gsap.fromTo(shaker.current, { scale: 1.06 }, { scale: 1, duration: 0.6, ease: 'power3.out' })
@@ -588,7 +592,7 @@ export function Hero() {
 
           <canvas className="dust" ref={dustCanvas} aria-hidden />
 
-          <div className="hero__floor">
+          <div className={`hero__floor${done ? ' hero__floor--done' : ''}`}>
             <div>
               <p className="floor-copy">Six members. One price. Est. 1985 (the price, not us).</p>
               <p className="floor-meta mono">
@@ -597,9 +601,11 @@ export function Hero() {
             </div>
             <div className={`hero__after${done ? ' hero__after--on' : ''}`} aria-hidden={!done}>
               <div className="rejects">
-                <span className="mono">PRICE CHANGES
+                <span className="mono">
+                  PRICE CHANGES
                   <br />
-                  REJECTED</span>
+                  REJECTED
+                </span>
                 <Odometer ref={rejectOdo} digits={2} initial={0} size={24} label="Price changes rejected" />
               </div>
               <p className="sling-hint mono">PULL A TAG BACK, LET GO</p>

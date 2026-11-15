@@ -568,8 +568,20 @@
   inset: 0;
   overflow: hidden;
   background:
-    linear-gradient(90deg, transparent calc(40% - 9px), rgba(243, 193, 46, 0.9) calc(40% - 9px), rgba(243, 193, 46, 0.9) calc(40% + 9px), transparent calc(40% + 9px)),
-    linear-gradient(90deg, transparent calc(60% - 9px), rgba(243, 193, 46, 0.9) calc(60% - 9px), rgba(243, 193, 46, 0.9) calc(60% + 9px), transparent calc(60% + 9px)),
+    linear-gradient(
+      90deg,
+      transparent calc(40% - 9px),
+      rgba(243, 193, 46, 0.9) calc(40% - 9px),
+      rgba(243, 193, 46, 0.9) calc(40% + 9px),
+      transparent calc(40% + 9px)
+    ),
+    linear-gradient(
+      90deg,
+      transparent calc(60% - 9px),
+      rgba(243, 193, 46, 0.9) calc(60% - 9px),
+      rgba(243, 193, 46, 0.9) calc(60% + 9px),
+      transparent calc(60% + 9px)
+    ),
     repeating-linear-gradient(0deg, transparent 0 218px, rgba(120, 116, 108, 0.45) 218px 221px) 0 var(--walk) / 100% 221px;
   -webkit-mask-image: url('/gen/ink.png');
   mask-image: url('/gen/ink.png');
@@ -769,9 +781,15 @@
     flex: none;
   }
   .stamp {
-    left: 22%;
-    top: 52%;
-    font-size: 32px;
+    left: 24%;
+    top: 82%;
+    font-size: 24px;
+  }
+  .hero__floor > div:first-child {
+    transition: opacity 300ms;
+  }
+  .hero__floor--done > div:first-child {
+    opacity: 0;
   }
   .hero__floor {
     bottom: 56px;
