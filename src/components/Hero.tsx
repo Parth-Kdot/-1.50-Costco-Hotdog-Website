@@ -106,7 +106,7 @@ export function Hero() {
     const render = (year: number) => {
       state.year = year
       yearOdo.current?.set(year)
-      shouldOdo.current?.set(shouldBe(year))
+      shouldOdo.current?.set(Math.round(shouldBe(year) * 100) / 100)
       chart.set(year, state.zoom)
     }
 
@@ -398,7 +398,9 @@ export function Hero() {
                     <Odometer ref={shouldOdo} digits={3} decimals={2} initial={1.5} size={18} />
                   </span>
                 </div>
-                <canvas className="display-chart" ref={chartCanvas} aria-label="Chart: the combo price stays flat at 1.50 while inflation-adjusted price climbs to about 4.37" />
+                <div className="display-chart">
+                  <canvas ref={chartCanvas} aria-label="Chart: the combo price stays flat at 1.50 while inflation-adjusted price climbs to about 4.37" />
+                </div>
                 <div className="display-foot mono">
                   <span>1985 DOLLARS · CPI-U · BLS</span>
                   <span className={`delta${delta ? ' delta--on' : ''}`}>Δ 41Y: 0.00%</span>

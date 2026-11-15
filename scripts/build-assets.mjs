@@ -60,7 +60,7 @@ function rawPng(data, width, height, channels) {
   const px = new Uint8Array(S * S * 3)
   const base = [0xd9, 0xd6, 0xcf]
   for (let i = 0; i < S * S; i++) {
-    const blotch = (big[i] - 0.5) * 0.14 + (mid[i] - 0.5) * 0.06
+    const blotch = (big[i] - 0.5) * 0.08 + (mid[i] - 0.5) * 0.05
     const grain = (r() - 0.5) * 0.08
     const k = 1 + blotch + grain
     px[i * 3] = Math.max(0, Math.min(255, base[0] * k))

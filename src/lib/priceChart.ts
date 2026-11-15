@@ -62,7 +62,7 @@ export class PriceChart {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
     ctx.clearRect(0, 0, w, h)
 
-    const padL = 44
+    const padL = 58
     const padR = 10
     const padT = 12
     const padB = 20
