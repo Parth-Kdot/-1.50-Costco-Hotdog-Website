@@ -31,7 +31,13 @@ function ComboArt() {
       <g transform="translate(176 6)">
         <rect x="27" y="-4" width="5" height="34" rx="1" fill="#b3261e" transform="rotate(12 30 10)" />
         <path d="M6 26h56l-2 7H8z" fill="#15130f" />
-        <path d="M10 33h48l-6 86c-.3 3-2.6 5-5.6 5H21.6c-3 0-5.3-2-5.6-5z" fill="#fff4da" stroke="#15130f" strokeWidth="2.6" strokeLinejoin="round" />
+        <path
+          d="M10 33h48l-6 86c-.3 3-2.6 5-5.6 5H21.6c-3 0-5.3-2-5.6-5z"
+          fill="#fff4da"
+          stroke="#15130f"
+          strokeWidth="2.6"
+          strokeLinejoin="round"
+        />
         <path d="M13.2 62h41.6l-1.6 24H14.8z" fill="#b3261e" />
         <path d="M18 74c6-5 10 5 16 0s10 5 16 0" stroke="#fff4da" strokeWidth="2" fill="none" strokeLinecap="round" />
       </g>
@@ -39,7 +45,14 @@ function ComboArt() {
       <g transform="translate(6 46)">
         <path d="M10 38c-6 0-10-5-9-11 1-5 6-8 11-8h128c6 0 11 3 11 9 0 6-5 10-11 10z" fill="#d9a11b" />
         <rect x="-2" y="12" width="162" height="22" rx="11" fill="#b3261e" />
-        <path d="M8 23c7-8 12 8 19 0s12 8 19 0 12 8 19 0 12 8 19 0 12 8 19 0 12 8 19 0 12 8 19 0" stroke="#f3c12e" strokeWidth="3.4" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        <path
+          d="M8 23c7-8 12 8 19 0s12 8 19 0 12 8 19 0 12 8 19 0 12 8 19 0 12 8 19 0 12 8 19 0"
+          stroke="#f3c12e"
+          strokeWidth="3.4"
+          fill="none"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
         <path d="M6 40c0 18 10 26 26 26h96c16 0 26-8 26-26z" fill="#d9a11b" />
         <path d="M18 52c26 8 92 8 124 0" stroke="#b07f10" strokeWidth="2" fill="none" strokeLinecap="round" opacity=".6" />
       </g>
@@ -76,6 +89,7 @@ function Clamp({ boltRef }: { boltRef: React.RefObject<SVGGElement | null> }) {
 export function Hero() {
   const root = useRef<HTMLElement>(null)
   const stage = useRef<HTMLDivElement>(null)
+  const shaker = useRef<HTMLDivElement>(null)
   const board = useRef<HTMLDivElement>(null)
   const boardShake = useRef<HTMLDivElement>(null)
   const clamp = useRef<HTMLDivElement>(null)
@@ -100,8 +114,15 @@ export function Hero() {
     const dust = new Dust(dustCanvas.current!)
     const el = root.current!
 
-    const state = { year: 1985, fired: new Set<number>(), finale: false, zoom: 0, busy: false }
+    const state = {
+      year: 1985,
+      fired: new Set<number>(),
+      finale: false,
+      zoom: 0,
+      busy: false,
+    }
     const queue: number[] = []
+    if (import.meta.env.DEV) (window as unknown as { __hero: object }).__hero = { state, queue }
 
     const render = (year: number) => {
       state.year = year
@@ -166,20 +187,30 @@ export function Hero() {
         .fromTo(
           stamp.current,
           { scale: 2.4, opacity: 0, rotate: -14 },
-          { scale: 1, opacity: 0.92, rotate: -8, duration: 0.14, ease: 'expo.in' },
+          {
+            scale: 1,
+            opacity: 0.92,
+            rotate: -8,
+            duration: 0.14,
+            ease: 'expo.in',
+          },
         )
         .add(() => {
-          shake(stage.current!, touch ? 6 : 10, 0.26)
+          shake(shaker.current!, touch ? 6 : 10, 0.26)
           gsap.fromTo(board.current, { filter: 'brightness(0.94)' }, { filter: 'brightness(1)', duration: 0.3 })
         })
         .fromTo(stamp.current, { '--ink': '96%' }, { '--ink': '100%', duration: 0.3, ease: 'power2.out' }, '<')
-        .to(state, {
-          zoom: 1,
-          duration: 0.9,
-          ease: 'power2.inOut',
-          onUpdate: () => chart.set(state.year, state.zoom),
-          onComplete: () => setDelta(true),
-        }, '+=0.1')
+        .to(
+          state,
+          {
+            zoom: 1,
+            duration: 0.9,
+            ease: 'power2.inOut',
+            onUpdate: () => chart.set(state.year, state.zoom),
+            onComplete: () => setDelta(true),
+          },
+          '+=0.1',
+        )
         .add(() => setDone(true))
       return tl
     }
@@ -203,7 +234,7 @@ export function Hero() {
           queue.push(i)
         }
       })
-      if (year >= FINAL - 0.02 && !state.finale) {
+      if (year >= FINAL - 0.2 && !state.finale) {
         state.finale = true
         queue.push(-1)
       }
@@ -213,7 +244,13 @@ export function Hero() {
     const finalState = () => {
       state.zoom = 1
       render(FINAL)
-      gsap.set(stamp.current, { display: 'block', scale: 1, opacity: 0.92, rotate: -8, '--ink': '100%' })
+      gsap.set(stamp.current, {
+        display: 'block',
+        scale: 1,
+        opacity: 0.92,
+        rotate: -8,
+        '--ink': '100%',
+      })
       setDelta(true)
     }
 
@@ -262,7 +299,7 @@ export function Hero() {
       const riffle = (h: FlapHandle | null, final: string, at: number) => {
         const chars = '0123456789$.'
         for (let i = 0; i < 3; i++) {
-          intro.add(() => h?.show(chars[(i * 5 + final.length * 3 + at * 100) % chars.length | 0]), at + i * 0.06)
+          intro.add(() => h?.show(chars[((i * 5 + final.length * 3 + at * 100) % chars.length) | 0]), at + i * 0.06)
           intro.fromTo(h!.flap, { rotateX: -80 }, { rotateX: 0, duration: 0.06, ease: 'none' }, at + i * 0.06)
         }
         intro.add(() => h?.show(final), at + 0.18)
@@ -300,7 +337,9 @@ export function Hero() {
         },
         onUpdate: () => {
           if (replaying) return
-          const year = 1985 + (FINAL - 1985) * proxy.p
+          const raw = 1985 + (FINAL - 1985) * proxy.p
+          // the last fraction of the pin settles the drum on 2026
+          const year = raw > FINAL - 0.2 ? FINAL : raw
           render(year)
           checkBeats(year)
         },
@@ -315,7 +354,9 @@ export function Hero() {
         setDelta(false)
         gsap.set(stamp.current, { display: 'none' })
         gsap.set(board.current, { scale: 1 })
-        gsap.set(bolts.current!.querySelectorAll('.clamp__bolt'), { rotate: 0 })
+        gsap.set(bolts.current!.querySelectorAll('.clamp__bolt'), {
+          rotate: 0,
+        })
         const run = { y: 1985 }
         gsap.to(run, {
           y: FINAL,
@@ -345,98 +386,103 @@ export function Hero() {
   return (
     <section className="hero" ref={root} id="aisle-0" aria-label="The price holds">
       <div className="hero__stage" ref={stage}>
-        <div className="ceiling" aria-hidden>
-          {[0, 1, 2].map((r) => (
-            <div className={`tube-row tube-row--${r}`} key={r}>
-              <span className="tube" />
-              <span className="tube" />
-              <span className="tube tube--far" />
-            </div>
-          ))}
-        </div>
-
-        <div className="board-hang">
-          <i className="cable cable--l" aria-hidden />
-          <i className="cable cable--r" aria-hidden />
-          <div className="board-shake" ref={boardShake}>
-            <div className="board" ref={board}>
-              <Screw className="screw--tl" />
-              <Screw className="screw--tr" />
-              <Screw className="screw--bl" />
-              <Screw className="screw--br" />
-
-              <div className="panel panel--lit panel--item">
-                <ComboArt />
-                <div className="item-name">HOT DOG + SODA</div>
-                <div className="item-sub mono">COMBO · LIMIT: ONE FAMILY</div>
+        <div className="hero__shake" ref={shaker}>
+          <div className="ceiling" aria-hidden>
+            {[0, 1, 2].map((r) => (
+              <div className={`tube-row tube-row--${r}`} key={r}>
+                <span className="tube" />
+                <span className="tube" />
+                <span className="tube tube--far" />
               </div>
+            ))}
+          </div>
 
-              <div className="panel panel--lit panel--price">
-                <div className="price-row">
-                  <span className="micro mono">YEAR</span>
-                  <Odometer ref={yearOdo} digits={4} initial={1985} size={34} className="odo--year" label="Year" />
+          <div className="board-hang">
+            <i className="cable cable--l" aria-hidden />
+            <i className="cable cable--r" aria-hidden />
+            <div className="board-shake" ref={boardShake}>
+              <div className="board" ref={board}>
+                <Screw className="screw--tl" />
+                <Screw className="screw--tr" />
+                <Screw className="screw--bl" />
+                <Screw className="screw--br" />
+
+                <div className="panel panel--lit panel--item">
+                  <ComboArt />
+                  <div className="item-name">HOT DOG + SODA</div>
+                  <div className="item-sub mono">COMBO · LIMIT: ONE FAMILY</div>
                 </div>
-                <div className="price-tiles">
-                  <div className="clamp" ref={clamp}>
-                    <Clamp boltRef={bolts} />
+
+                <div className="panel panel--lit panel--price">
+                  <div className="price-row">
+                    <span className="micro mono">YEAR</span>
+                    <Odometer ref={yearOdo} digits={4} initial={1985} size={34} className="odo--year" label="Year" />
                   </div>
-                  <Flap ref={dollarSign} value="$" small />
-                  <Flap ref={dollar} value="1" />
-                  <Flap ref={dot} value="." small />
-                  <Flap ref={cents} value="50" wide />
+                  <div className="price-tiles">
+                    <div className="clamp" ref={clamp}>
+                      <Clamp boltRef={bolts} />
+                    </div>
+                    <Flap ref={dollarSign} value="$" small />
+                    <Flap ref={dollar} value="1" />
+                    <Flap ref={dot} value="." small />
+                    <Flap ref={cents} value="50" wide />
+                  </div>
+                  <p className="sr-only">Price: one dollar fifty. Still.</p>
+                  <div className="stamp" ref={stamp} aria-hidden>
+                    <span>STILL $1.50</span>
+                  </div>
                 </div>
-                <p className="sr-only">Price: one dollar fifty. Still.</p>
-                <div className="stamp" ref={stamp} aria-hidden>
-                  <span>STILL $1.50</span>
-                </div>
-              </div>
 
-              <div className="panel panel--display">
-                <div className="display-head mono">
-                  <span>WHAT IT SHOULD BE</span>
-                  <span className="display-readout">
-                    <Odometer ref={shouldOdo} digits={3} decimals={2} initial={1.5} size={18} />
-                  </span>
-                </div>
-                <div className="display-chart">
-                  <canvas ref={chartCanvas} aria-label="Chart: the combo price stays flat at 1.50 while inflation-adjusted price climbs to about 4.37" />
-                </div>
-                <div className="display-foot mono">
-                  <span>1985 DOLLARS · CPI-U · BLS</span>
-                  <span className={`delta${delta ? ' delta--on' : ''}`}>Δ 41Y: 0.00%</span>
+                <div className="panel panel--display">
+                  <div className="display-head mono">
+                    <span>WHAT IT SHOULD BE</span>
+                    <span className="display-readout">
+                      <Odometer ref={shouldOdo} digits={3} decimals={2} initial={1.5} size={18} />
+                    </span>
+                  </div>
+                  <div className="display-chart">
+                    <canvas
+                      ref={chartCanvas}
+                      aria-label="Chart: the combo price stays flat at 1.50 while inflation-adjusted price climbs to about 4.37"
+                    />
+                  </div>
+                  <div className="display-foot mono">
+                    <span>1985 DOLLARS · CPI-U · BLS</span>
+                    <span className={`delta${delta ? ' delta--on' : ''}`}>Δ 41Y: 0.00%</span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <canvas className="dust" ref={dustCanvas} aria-hidden />
+          <canvas className="dust" ref={dustCanvas} aria-hidden />
 
-        <div className="hero__floor">
-          <div>
-            <p className="floor-copy">Six members. One price. Est. 1985 (the price, not us).</p>
-            <p className="floor-meta mono">
-              MOONSHOT MISSION {flight.mission} · {flight.task.toUpperCase()} · {flight.pts} PTS
-            </p>
+          <div className="hero__floor">
+            <div>
+              <p className="floor-copy">Six members. One price. Est. 1985 (the price, not us).</p>
+              <p className="floor-meta mono">
+                MOONSHOT MISSION {flight.mission} · {flight.task.toUpperCase()} · {flight.pts} PTS
+              </p>
+            </div>
+            <button
+              className={`key run-key${done ? ' run-key--on' : ''}`}
+              onClick={() => replay.current()}
+              tabIndex={done ? 0 : -1}
+              aria-hidden={!done}
+            >
+              Run it again
+            </button>
           </div>
-          <button
-            className={`key run-key${done ? ' run-key--on' : ''}`}
-            onClick={() => replay.current()}
-            tabIndex={done ? 0 : -1}
-            aria-hidden={!done}
-          >
-            Run it again
-          </button>
-        </div>
 
-        <div className="floor-stripe" aria-hidden>
-          <span className="wide">AISLE 01 →</span>
-        </div>
+          <div className="floor-stripe" aria-hidden>
+            <span className="wide">AISLE 01 →</span>
+          </div>
 
-        <div className="dark-bands" aria-hidden>
-          <div className="dark-band" />
-          <div className="dark-band" />
-          <div className="dark-band" />
+          <div className="dark-bands" aria-hidden>
+            <div className="dark-band" />
+            <div className="dark-band" />
+            <div className="dark-band" />
+          </div>
         </div>
       </div>
     </section>

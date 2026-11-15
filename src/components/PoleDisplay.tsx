@@ -65,8 +65,15 @@ export function PoleDisplay() {
       </motion.div>
       <div className="pole__segs">
         {AISLES.map((a) => (
-          <button key={a.n} className="pole__seg" onClick={() => scrollToTarget(`#aisle-${a.n}`)} aria-label={`Aisle ${a.n}: ${a.name.toLowerCase()}`}>
-            {aisle === a.n && <motion.span layoutId="pole-pill" className="pole__pill" transition={{ type: 'spring', stiffness: 500, damping: 36 }} />}
+          <button
+            key={a.n}
+            className="pole__seg"
+            onClick={() => scrollToTarget(`#aisle-${a.n}`)}
+            aria-label={`Aisle ${a.n}: ${a.name.toLowerCase()}`}
+          >
+            {aisle === a.n && (
+              <motion.span layoutId="pole-pill" className="pole__pill" transition={{ type: 'spring', stiffness: 500, damping: 36 }} />
+            )}
             <span className="pole__num">{String(a.n).padStart(2, '0')}</span>
           </button>
         ))}

@@ -26,7 +26,7 @@ export const Odometer = forwardRef<OdometerHandle, Props>(function Odometer(
 ) {
   const wheels = useRef<(HTMLDivElement | null)[]>([])
   const live = useRef<HTMLSpanElement>(null)
-  const radius = (size / 2) / Math.tan(Math.PI / 10)
+  const radius = size / 2 / Math.tan(Math.PI / 10)
 
   const set = useCallback(
     (value: number) => {
@@ -37,7 +37,7 @@ export const Odometer = forwardRef<OdometerHandle, Props>(function Odometer(
         // A wheel only turns while every wheel to its right is rolling from 9 to 0.
         const below = scaled % place
         const carry = k === 0 ? scaled % 1 : Math.max(0, Math.min(1, below - (place - 1)))
-        const v = k === 0 ? (scaled % 10) : base + carry
+        const v = k === 0 ? scaled % 10 : base + carry
         const el = wheels.current[digits - 1 - k]
         if (el) el.style.transform = `translateZ(${-radius}px) rotateX(${v * 36}deg)`
       }

@@ -5,7 +5,12 @@ import { isTouch, prefersReducedMotion } from './env'
 gsap.registerPlugin(ScrollTrigger)
 ScrollTrigger.config({ autoRefreshEvents: 'visibilitychange,DOMContentLoaded,load', ignoreMobileResize: true })
 
-type LenisLike = { velocity: number; scrollTo: (t: number | string | HTMLElement, o?: object) => void; raf: (t: number) => void; on: (e: string, f: () => void) => void }
+type LenisLike = {
+  velocity: number
+  scrollTo: (t: number | string | HTMLElement, o?: object) => void
+  raf: (t: number) => void
+  on: (e: string, f: () => void) => void
+}
 let lenis: LenisLike | null = null
 
 export async function startSmoothScroll() {
@@ -49,3 +54,7 @@ export function scrollToTarget(target: string | HTMLElement) {
 }
 
 export { gsap, ScrollTrigger }
+
+if (import.meta.env.DEV && typeof window !== 'undefined') {
+  ;(window as unknown as { gsap: typeof gsap }).gsap = gsap
+}

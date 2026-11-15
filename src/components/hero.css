@@ -10,6 +10,11 @@
   isolation: isolate;
 }
 
+.hero__shake {
+  position: absolute;
+  inset: 0;
+}
+
 /* ── Ceiling and tubes ─────────────────────────────────────────────── */
 .ceiling {
   position: absolute;
@@ -182,8 +187,7 @@
 }
 
 .panel--lit {
-  background:
-    radial-gradient(120% 90% at 50% 40%, #fffaf0 0%, #fff4da 55%, #f2e2bc 100%);
+  background: radial-gradient(120% 90% at 50% 40%, #fffaf0 0%, #fff4da 55%, #f2e2bc 100%);
   box-shadow:
     inset 0 0 0 1px rgba(0, 0, 0, 0.5),
     inset 0 0 22px rgba(196, 160, 90, 0.35);
@@ -351,8 +355,8 @@
   --ink: 100%;
   display: none;
   position: absolute;
-  left: 34%;
-  top: 58%;
+  left: 47%;
+  top: 70%;
   z-index: 5;
   padding: 0.16em;
   font-family: var(--f-display);
