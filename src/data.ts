@@ -6,48 +6,51 @@ export type Member = {
   short: string
   handle?: string
   role: Role
-  /** Position in the group photo, as a % box of the image (left, top, width, height). */
-  spot: { x: number; y: number; w: number; h: number }
   remote?: boolean
+  /** Where the scan beam "rings them up", as a fraction of photo width. */
+  beam: number
+  /** Price sticker position on the photo, in % of width / height. */
+  sticker: { x: number; y: number }
+  frame: string
 }
 
-// Left to right in the photo: Max, Cal, Parth (holding the laptop, Jay on screen), Zeke, Paritosh.
+// Card stack order. Photo order left to right: Max, Cal, Parth (holding the laptop, Jay on screen), Zeke, Paritosh.
 export const members: Member[] = [
-  { id: 'zeke', name: 'Esequiel Linares', short: 'Zeke', handle: 'zekepeke', role: 'mentor', spot: { x: 61, y: 23, w: 14, h: 75 } },
-  { id: 'jay', name: 'Jay Yu', short: 'Jay', role: 'mentor', remote: true, spot: { x: 45.5, y: 46, w: 10.5, h: 12 } },
-  { id: 'max', name: 'Maxwell Meytin', short: 'Max', handle: 'mmeytin', role: 'mentor', spot: { x: 5, y: 18, w: 21, h: 80 } },
-  { id: 'cal', name: 'Cal Vest', short: 'Cal', handle: 'cal', role: 'mentee', spot: { x: 25, y: 34, w: 16, h: 64 } },
-  { id: 'paritosh', name: 'Paritosh Paudel', short: 'Paritosh', handle: 'paritoshp', role: 'mentee', spot: { x: 74, y: 21, w: 22, h: 77 } },
-  { id: 'parth', name: 'Parth Kaushik', short: 'Parth', handle: 'parth', role: 'mentee', spot: { x: 40, y: 20, w: 20, h: 78 } },
+  { id: 'zeke', name: 'Esequiel Linares', short: 'Zeke', handle: 'zekepeke', role: 'mentor', beam: 0.655, sticker: { x: 69, y: 58 }, frame: 'FRAME POS 4 OF 5' },
+  { id: 'jay', name: 'Jay Yu', short: 'Jay', role: 'mentor', remote: true, beam: 0.497, sticker: { x: 55.5, y: 60 }, frame: 'ON THE SCREEN, HELD BY PARTH' },
+  { id: 'max', name: 'Maxwell Meytin', short: 'Max', handle: 'mmeytin', role: 'mentor', beam: 0.165, sticker: { x: 16.5, y: 55 }, frame: 'FRAME POS 1 OF 5, FAR LEFT' },
+  { id: 'cal', name: 'Cal Vest', short: 'Cal', handle: 'cal', role: 'mentee', beam: 0.306, sticker: { x: 32, y: 67 }, frame: 'FRAME POS 2 OF 5' },
+  { id: 'paritosh', name: 'Paritosh Paudel', short: 'Paritosh', handle: 'paritoshp', role: 'mentee', beam: 0.849, sticker: { x: 84.5, y: 58 }, frame: 'FRAME POS 5 OF 5, FAR RIGHT' },
+  { id: 'parth', name: 'Parth Kaushik', short: 'Parth', handle: 'parth', role: 'mentee', beam: 0.49, sticker: { x: 45, y: 40 }, frame: 'FRAME POS 3 OF 5, CENTRE' },
 ]
 
-export type LogEntry = {
-  code: string
-  title: string
-  detail: string
-  status: 'done' | 'live' | 'started'
-  pts?: number
+export const byId = Object.fromEntries(members.map((m) => [m.id, m])) as Record<string, Member>
+
+/** Fixed spots in the photo, % of width / height. */
+export const photoSpots = {
+  screen: { x: 42.8, y: 45.1, w: 13.9, h: 12.9 },
+  pointingHand: { x: 61.4, y: 53.8 },
+  ears: [
+    { x: 31.6, y: 36 },
+    { x: 69.8, y: 25 },
+  ],
 }
 
-// Static mission log. Add entries here; newest last.
-export const missionLog: LogEntry[] = [
-  {
-    code: 'FAM-01',
-    title: 'Family assembled',
-    detail: 'Three mentors, three mentees, one name nobody can say with a straight face.',
-    status: 'done',
-  },
-  {
-    code: 'FAM-02',
-    title: 'Group photo, green wall',
-    detail: 'Five in the room, Jay on the laptop. Two sets of bunny ears. Zeke pointing at the screen like it owed him money.',
-    status: 'done',
-  },
-  {
-    code: '#7',
-    title: 'Moonshot Mission: Family Site',
-    detail: 'Build and deploy a page for your family. Members, photos, mission log. You are looking at it.',
-    status: 'live',
-    pts: 50,
-  },
-]
+export const flight = {
+  mission: '#7',
+  name: 'Moonshot Mission',
+  task: 'Family Site',
+  pts: 50,
+  url: '150costcohotdog.vercel.app',
+}
+
+// CPI-U, U.S. city average, annual averages (1982-84 = 100). Source: BLS.
+export const cpi: Record<number, number> = {
+  1985: 107.6, 1986: 109.6, 1987: 113.6, 1988: 118.3, 1989: 124.0, 1990: 130.7, 1991: 136.2, 1992: 140.3,
+  1993: 144.5, 1994: 148.2, 1995: 152.4, 1996: 156.9, 1997: 160.5, 1998: 163.0, 1999: 166.6, 2000: 172.2,
+  2001: 177.1, 2002: 179.9, 2003: 184.0, 2004: 188.9, 2005: 195.3, 2006: 201.6, 2007: 207.342, 2008: 215.303,
+  2009: 214.537, 2010: 218.056, 2011: 224.939, 2012: 229.594, 2013: 232.957, 2014: 236.736, 2015: 237.017,
+  2016: 240.007, 2017: 245.12, 2018: 251.107, 2019: 255.657, 2020: 258.811, 2021: 270.97, 2022: 292.655,
+  2023: 304.702, 2024: 313.689,
+}
+export const CPI_LAST_YEAR = 2024
