@@ -44,7 +44,8 @@ const LINES: Line[] = [
   { kind: 'text', text: `MISSION ${flight.mission} ${flight.task.toUpperCase()}`, strong: true },
   { kind: 'pair', left: flight.name.split(' ')[0].toUpperCase(), right: `${flight.pts} PTS`, indent: true },
   { kind: 'pair', left: 'STATUS', right: 'IN PROGRESS', indent: true, id: 'status' },
-  { kind: 'pair', left: 'SHIPPED', right: flight.url, indent: true, id: 'shipped' },
+  { kind: 'pair', left: 'STATUS', right: 'SHIPPED', indent: true, id: 'shipped', strong: true },
+  { kind: 'text', text: `  ${flight.url}`, id: 'shipped' },
   { kind: 'rule', char: '*' },
   { kind: 'pair', left: 'SUBTOTAL', right: `${flight.pts} PTS` },
   { kind: 'pair', left: 'ITEMS', right: '6' },
@@ -98,14 +99,14 @@ export function Receipt() {
     const el = paper.current!
     const lines = Array.from(el.querySelectorAll<HTMLElement>('[data-line]'))
     const status = el.querySelector<HTMLElement>('[data-id="status"]')
-    const shipped = el.querySelector<HTMLElement>('[data-id="shipped"]')
+    const shipped = el.querySelectorAll<HTMLElement>('[data-id="shipped"]')
     const total = el.querySelector<HTMLElement>('[data-id="total"]')
 
     const printAll = () => {
       el.style.setProperty('--fed', '100%')
       lines.forEach((l) => l.classList.add('is-printed'))
       status?.classList.add('is-struck')
-      shipped?.classList.add('is-live')
+      shipped.forEach((n) => n.classList.add('is-live'))
       total?.classList.add('is-checked')
     }
 
@@ -132,7 +133,7 @@ export function Receipt() {
             if (l === status && !struck) {
               struck = true
               timers.push(window.setTimeout(() => status!.classList.add('is-struck'), 400))
-              timers.push(window.setTimeout(() => shipped?.classList.add('is-live'), 700))
+              timers.push(window.setTimeout(() => shipped.forEach((n) => n.classList.add('is-live')), 700))
             }
             if (l === total) total.classList.add('is-checked')
           }

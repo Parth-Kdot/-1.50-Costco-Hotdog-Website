@@ -122,7 +122,6 @@ export function Hero() {
       busy: false,
     }
     const queue: number[] = []
-    if (import.meta.env.DEV) (window as unknown as { __hero: object }).__hero = { state, queue }
 
     const render = (year: number) => {
       state.year = year

@@ -72,8 +72,11 @@ function TagBody({ m }: { m: Member }) {
 
 export function Scanner() {
   const narrow = useNarrow()
+  const narrowRef = useRef(narrow)
+  narrowRef.current = narrow
   const section = useRef<HTMLElement>(null)
   const glass = useRef<HTMLDivElement>(null)
+  const bed = useRef<HTMLDivElement>(null)
   const beam = useRef<HTMLDivElement>(null)
   const arrow = useRef<SVGPathElement>(null)
   const subtotal = useRef<OdometerHandle>(null)
@@ -90,7 +93,7 @@ export function Scanner() {
 
   const setX = useCallback((x: number) => {
     xRef.current = x
-    glass.current?.style.setProperty('--x', `${x}%`)
+    bed.current?.style.setProperty('--x', `${x}%`)
   }, [])
 
   const rollTo = useCallback((count: number) => {
@@ -146,12 +149,12 @@ export function Scanner() {
     // The beam hesitates at the laptop. The page never holds; only the timeline does.
     t.add(() => {
       setPhase('hold')
-      pole.set({ alert: 'UNEXPECTED ITEM IN BAGGING AREA' })
+      pole.set({ alert: narrowRef.current ? 'UNEXPECTED ITEM' : 'UNEXPECTED ITEM IN BAGGING AREA' })
       sound.beep(620, 160)
     })
     for (let i = 1; i < STEPS.length; i++) t.add(() => setStep(i), `+=${i === 1 ? 0.2 : 0.14}`)
     t.add(() => {
-      pole.set({ alert: 'ITEM CONTAINS 1 MENTOR (REMOTE)' })
+      pole.set({ alert: narrowRef.current ? '1 MENTOR (REMOTE)' : 'ITEM CONTAINS 1 MENTOR (REMOTE)' })
       setRung((prev) => (prev.includes('jay') ? prev : [...prev, 'jay']))
       rollTo(RING.filter((m) => m.beam * 100 <= JAY_AT).length)
       sound.beep()
@@ -272,7 +275,7 @@ export function Scanner() {
       </div>
 
       <div className="photo__floor">
-        <div className={`scanner scanner--${phase}`}>
+        <div className={`scanner scanner--${phase}`} ref={bed} style={{ ['--x' as string]: '0%' }}>
           <div className="scanner__top">
             <span className={`scanner__led scanner__led--${phase}`} aria-hidden />
             <div className="scanner__rail" ref={rail} aria-hidden>
@@ -315,7 +318,6 @@ export function Scanner() {
             onPointerUp={onUp}
             onPointerCancel={onUp}
             onPointerLeave={() => !loupeMode && onUp()}
-            style={{ ['--x' as string]: '0%' }}
           >
             <img
               className="scanner__color"
@@ -340,18 +342,15 @@ export function Scanner() {
             )}
 
             <svg className="scanner__ink" viewBox="0 0 1396 960" aria-hidden>
-              <path
-                ref={arrow}
-                className="hl-arrow"
-                pathLength={1}
-                d="M872 506 C 905 440, 880 392, 812 420"
-              />
+              <path ref={arrow} className="hl-arrow" pathLength={1} d="M872 506 C 905 440, 880 392, 812 420" />
               <path className="hl-head" d="M826 404 L 808 421 L 832 431" style={{ opacity: step >= 3 ? 1 : 0 }} />
             </svg>
 
             <div className="scanner__beam" ref={beam} aria-hidden />
 
-            {members.map((m) => (rung.includes(m.id) ? <Sticker key={m.id} m={m} narrow={narrow} open={open === m.id} onOpen={setOpen} /> : null))}
+            {members.map((m) =>
+              rung.includes(m.id) ? <Sticker key={m.id} m={m} narrow={narrow} open={open === m.id} onOpen={setOpen} /> : null,
+            )}
 
             {done && (
               <div className="ears" style={{ left: `${photoSpots.ears[1].x}%`, top: `${photoSpots.ears[1].y}%` }}>
@@ -374,11 +373,7 @@ export function Scanner() {
                 }}
                 aria-hidden
               >
-                {loupe.onScreen && (
-                  <span className="loupe__tag">
-                    JAY YU / ON THE SCREEN / HELD BY PARTH / POINTED AT BY ZEKE
-                  </span>
-                )}
+                {loupe.onScreen && <span className="loupe__tag">JAY YU / ON THE SCREEN / HELD BY PARTH / POINTED AT BY ZEKE</span>}
               </div>
             )}
           </div>
@@ -393,14 +388,19 @@ export function Scanner() {
               const on = rung.includes(id)
               return (
                 <li key={id} className={on ? 'on' : ''}>
-                  <span>{m.short.toUpperCase()}{m.remote ? ' (LAPTOP)' : ''}</span>
+                  <span>
+                    {m.short.toUpperCase()}
+                    {m.remote ? ' (LAPTOP)' : ''}
+                  </span>
                   <span>{on ? '0.25' : '----'}</span>
                 </li>
               )
             })}
           </ol>
           <p className={`register__print mono${done ? ' register__print--on' : ''}`}>6 @ 0.25 = 1.50. PRICE UNCHANGED.</p>
-          <p className="register__hint mono">{narrow ? 'HOLD THE PHOTO FOR A LOUPE · TAP A STICKER' : 'HOVER A STICKER · HOLD OR ALT FOR LOUPE · DRAG THE RAIL'}</p>
+          <p className="register__hint mono">
+            {narrow ? 'HOLD THE PHOTO FOR A LOUPE · TAP A STICKER' : 'HOVER A STICKER · HOLD OR ALT FOR LOUPE · DRAG THE RAIL'}
+          </p>
         </aside>
       </div>
 
