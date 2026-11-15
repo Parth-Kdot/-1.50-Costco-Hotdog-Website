@@ -23,7 +23,7 @@ export const members: Member[] = [
     handle: 'zekepeke',
     role: 'mentor',
     beam: 0.655,
-    sticker: { x: 69, y: 58 },
+    sticker: { x: 68, y: 73 },
     frame: 'FRAME POS 4 OF 5',
   },
   {
@@ -33,7 +33,7 @@ export const members: Member[] = [
     role: 'mentor',
     remote: true,
     beam: 0.497,
-    sticker: { x: 55.5, y: 60 },
+    sticker: { x: 49.5, y: 66 },
     frame: 'ON THE SCREEN, HELD BY PARTH',
   },
   {
@@ -43,7 +43,7 @@ export const members: Member[] = [
     handle: 'mmeytin',
     role: 'mentor',
     beam: 0.165,
-    sticker: { x: 16.5, y: 55 },
+    sticker: { x: 16.5, y: 56 },
     frame: 'FRAME POS 1 OF 5, FAR LEFT',
   },
   {
@@ -53,7 +53,7 @@ export const members: Member[] = [
     handle: 'cal',
     role: 'mentee',
     beam: 0.306,
-    sticker: { x: 32, y: 67 },
+    sticker: { x: 31, y: 71 },
     frame: 'FRAME POS 2 OF 5',
   },
   {
@@ -63,7 +63,7 @@ export const members: Member[] = [
     handle: 'paritoshp',
     role: 'mentee',
     beam: 0.849,
-    sticker: { x: 84.5, y: 58 },
+    sticker: { x: 86.5, y: 60 },
     frame: 'FRAME POS 5 OF 5, FAR RIGHT',
   },
   {
@@ -73,7 +73,7 @@ export const members: Member[] = [
     handle: 'parth',
     role: 'mentee',
     beam: 0.49,
-    sticker: { x: 45, y: 40 },
+    sticker: { x: 50.5, y: 39 },
     frame: 'FRAME POS 3 OF 5, CENTRE',
   },
 ]
