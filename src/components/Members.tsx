@@ -32,7 +32,7 @@ function CardFront({ m, no }: { m: Member; no: number }) {
         <span className="card__tier-note mono">{m.remote ? 'REMOTE MEMBER' : 'FAMILY MEMBER'}</span>
       </div>
       <div className="card__body">
-        <div className={`card__photo${m.remote ? ' card__photo--remote' : ''}`}>
+        <div className="card__photo">
           <img src={`/gen/portrait-${m.id}.png`} alt={`${m.name}, from the group photo`} draggable={false} />
         </div>
         <div className="card__id">

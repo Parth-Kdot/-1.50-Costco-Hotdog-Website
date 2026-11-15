@@ -8,8 +8,10 @@ export const portraits = {
   parth: { left: 580, top: 165, width: 220, height: 275 },
   zeke: { left: 805, top: 200, width: 220, height: 275 },
   paritosh: { left: 1065, top: 180, width: 220, height: 275 },
-  jay: { left: 632, top: 438, width: 128, height: 118 },
 }
 
 // The laptop screen, used for Jay's de-pixelation steps.
 export const screen = { left: 597, top: 433, width: 194, height: 124 }
+
+// Jay's own photo (public/photos/jay.webp, 1230 x 1164), used for his membership card.
+export const jayPortrait = { left: 240, top: 110, width: 760, height: 950 }

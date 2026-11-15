@@ -2,7 +2,7 @@
 // Run with `npm run assets`. Output goes to public/gen and is committed.
 import sharp from 'sharp'
 import { mkdir } from 'node:fs/promises'
-import { portraits, screen } from './regions.mjs'
+import { portraits, screen, jayPortrait } from './regions.mjs'
 
 const SRC = 'public/photos/family.webp'
 const OUT = 'public/gen'
@@ -194,9 +194,26 @@ await sharp(SRC).webp({ quality: 86 }).toFile(`${OUT}/family-1396.webp`)
 // 5. Membership card portraits: ordered dither, ink on card paper, rendered at 2x
 for (const [id, region] of Object.entries(portraits)) {
   const crop = await sharp(SRC).extract(region).toBuffer()
-  const src = await grey(crop, id === 'jay' ? 150 : 176, id === 'jay' ? 1 : 1.6)
+  const src = await grey(crop, 176, 1.6)
   const bits = bayer(src)
   await rawPng(twoTone(bits, src.w, src.h, INK, CARD_PAPER), src.w, src.h, 3).toFile(`${OUT}/portrait-${id}.png`)
+}
+{
+  const crop = await sharp('public/photos/jay.webp').extract(jayPortrait).blur(1.6).toBuffer()
+  const src = await grey(crop, 176, 1.35)
+  // Fade the foliage to a plain backdrop so the dither reads like the others' wall.
+  for (let y = 0; y < src.h; y++) {
+    for (let x = 0; x < src.w; x++) {
+      const dx = (x / src.w - 0.5) / 0.36
+      const dy = (y / src.h - 0.46) / 0.42
+      const d = Math.sqrt(dx * dx + dy * dy)
+      const k = Math.max(0, Math.min(1, (d - 0.85) / 0.35)) * (y / src.h < 0.72 ? 1 : 0.15)
+      const i = y * src.w + x
+      src.g[i] = src.g[i] * (1 - k) + 218 * k
+    }
+  }
+  const bits = bayer(src)
+  await rawPng(twoTone(bits, src.w, src.h, INK, CARD_PAPER), src.w, src.h, 3).toFile(`${OUT}/portrait-jay.png`)
 }
 
 // 6. Jay on the laptop screen: three block sizes, then sharp
